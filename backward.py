@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
-from collections import deque
 import math
+import pickle
 from typing import Callable, List, Optional
 import numpy as np
 
@@ -31,28 +30,40 @@ class Value():
 
 
 # ======== 加法运算 =======
+    # @forNotValue
     @forNotValue
     def __add__(self, other)-> "Value":
-
-        out = Value(self.data + other.data, (self, other))
+        out = Value(self.data + other.data, (self, other))  # 必须包含两者
+        # print(f"add 节点 {id(out)} 的子节点：{[id(self), id(other)]}")  # 应包含旧 b 和 c 的 id
+        # print(f"c 的 id：{id(c)}")  # 与上一行的 other id 一致
         
         def _backward():
-            '''
-                out = self + other
-                Dout_self = 1
-                Dout_other = 1
-                一元求导法则：
-                Dself = Dout_self * Dout = Dout
-                Dother = Dout_other * Dout = Dout
-                多元是将多个一元求导法则的Dout加起来:
-                Dself += Dout
-                Dother += Dout
-            '''
+            # print("add 节点的 _backward 被调用！")
             self.grad += out.grad
-            other.grad += out.grad
-        
-        out._backward = _backward # (O)
+            other.grad += out.grad  # other 是 c，梯度传递给 c
+        out._backward = _backward
         return out
+    # def __add__(self, other)-> "Value":
+
+    #     out = Value(self.data + other.data, (self, other))
+        
+    #     def _backward():
+    #         '''
+    #             out = self + other
+    #             Dout_self = 1
+    #             Dout_other = 1
+    #             一元求导法则：
+    #             Dself = Dout_self * Dout = Dout
+    #             Dother = Dout_other * Dout = Dout
+    #             多元是将多个一元求导法则的Dout加起来:
+    #             Dself += Dout
+    #             Dother += Dout
+    #         '''
+    #         self.grad += out.grad
+    #         other.grad += out.grad
+        
+    #     out._backward = _backward # (O)
+    #     return out
     def __radd__(self, other)-> "Value":
         '''
             反向加法为了应对以下情形
@@ -63,8 +74,25 @@ class Value():
         '''
         return self + other
     
-    # def __iadd__(self, other):
-    #     return self + other
+    # TODO:验证
+    def __iadd__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        self.data += other.data
+        
+        # 强制添加 other 到子节点（即使重复，确保计算图完整）
+        self._child = self._child + (other,)  # 关键修复：去掉 if 判断，直接添加
+        
+        original_backward = self._backward
+
+        def _backward():
+            if original_backward is not None:
+                original_backward()
+            # 遍历所有子节点传递梯度
+            for child in self._child:
+                child.grad += 1.0 * self.grad  # 传递梯度给 log 节点
+        
+        self._backward = _backward
+        return self
     
 # ======== 减法运算 =======
     def __sub__(self, other)-> "Value":
@@ -103,25 +131,21 @@ class Value():
         return self * other
     
 # ======== 指数运算和幂运算 =======
+    # @forNotValue
     @forNotValue
     def __pow__(self, other)-> "Value":
-        assert isinstance(other.data, (float, int)), "指数运算的指数必须是int或float类型"
+        assert isinstance(other.data, (float, int)), "指数必须是int/float"
         y = self.data**other.data
-        out = Value(y, (self, other))
-
-        def _backward():
-            '''
-                out = self ** other
-                Dout_self = other * self**(other - 1)
-                Dout_other = self**other * ln(self)
-                一元求导法则：
-                Dself = Dout_self * Dout = other * self**(other - 1) * Dout
-                Dother = Dout_other * Dout = self**other * ln(self) * Dout
-            '''
-            self.grad += other.data * self.data**(other.data - 1) * out.grad
-            other.grad += y * math.log(self.data, math.e) * out.grad
+        # 关键修复：子节点添加 other，补全计算图
+        out = Value(y, (self, other))  # 之前是 (self,)，现在改为 (self, other)
         
-        out._backward = _backward # (O)
+        def _backward():
+            # 梯度计算逻辑不变（other 是常数，其梯度无需更新，仅用 its data）
+            self.grad += other.data * self.data**(other.data - 1) * out.grad
+            # 常数 other 的梯度无需累加（可注释或保留，不影响结果）
+            # other.grad += y * math.log(self.data) * out.grad  # 可选，常数梯度无用
+        
+        out._backward = _backward
         return out
 
 # ======== 除法运算 =======
@@ -189,57 +213,86 @@ class Value():
         return out
 # ======= log =======
     def log(self, numBase: float = math.e) -> "Value":
-            """
-            计算以 numBase 为底的对数（默认自然对数 ln）
-            公式：log_base(x) = ln(x) / ln(base) （换底公式）
-            """
-            # 确保底数是合法的正数（且不等于1）
-            if numBase <= 0 or numBase == 1:
-                raise ValueError("对数的底数必须是正数且不等于1")
-            
-            # 计算对数结果（使用换底公式，基于自然对数实现）
-            x = self.data
-            if x <= 0:
-                raise ValueError("对数的输入必须是正数")
-            
-            # 计算 log_base(x) = ln(x) / ln(base)
-            log_x = math.log(x)  # 自然对数 ln(x)
-            log_base = math.log(numBase)  # 自然对数 ln(base)
-            out_data = log_x / log_base  # 换底公式
-            
-            # 创建输出 Value，记录父节点（仅依赖 self，因为底数是常数）
-            out = Value(out_data, (self,))
-            
-            # 定义反向传播逻辑
-            def _backward():
-                """
-                对数的导数：d/dx [log_base(x)] = 1 / (x * ln(base))
-                因此，上游梯度 * 导数 = out.grad / (x * ln(base))
-                """
-                derivative = 1.0 / (x * log_base)  # 导数计算
-                self.grad += derivative * out.grad  # 梯度累加
-            
-            out._backward = _backward
-            return out
+        if numBase <= 0 or numBase == 1:
+            raise ValueError("底数必须是正数且不等于1")
+        
+        x = self.data
+        x = max(x, 1e-8)  # 避免 log(0)
+        log_x = math.log(x)
+        log_base = math.log(numBase) if numBase != math.e else 1.0  # 自然对数优化
+        out_data = log_x / log_base
+        
+        # 关键1：子节点必须包含 self（当前 Value 实例，即 a）
+        out = Value(out_data, (self,))
+        
+
+    # ... 前向计算 ...
+        def _backward():
+            # print(f"log 节点的 self id：{id(self)}")
+            # print(f"原始 a 的 id：{id(a)}")  # 确保在测试用例中可访问 a
+            derivative = 1.0 / (x * log_base)
+            self.grad += derivative * out.grad
+            # print(f"log 梯度计算：derivative={derivative}, out.grad={out.grad}, 累加值={derivative * out.grad}")
+        out._backward = _backward
+        return out
+        
+        # out._backward = _backward
+        # return out
 
 
 
 
 # >>> 反向传播 <<<
+    # def backward(self):
+    #     self.grad = 1.0  # 根节点（损失）梯度初始化为1
+
+    #     # 步骤1：拓扑排序（获取从输入到输出的节点顺序）
+    #     topo_order = []
+    #     visited = set()
+    #     stack = [self]
+
+    #     while stack:
+    #         node = stack.pop()
+    #         if node not in visited:
+    #             visited.add(node)
+    #             # 先将子节点入栈（确保父节点后于子节点被访问）
+    #             for child in node._child:
+    #                 if child not in visited:
+    #                     stack.append(child)
+    #             topo_order.append(node)  # 后序添加，形成拓扑序
+
+    #     # 步骤2：逆序遍历拓扑排序（从输出到输入），计算梯度
+    #     for node in reversed(topo_order):
+    #         if node._backward is not None:
+    #             node._backward()  # 此时父节点的梯度已计算完成
+
     def backward(self):
-        self.grad = 1.0
-        allValueNeedToBackward = deque([self])
-        # 广度优先遍历计算梯度
-        while allValueNeedToBackward:
-            parent = allValueNeedToBackward.popleft()
-            if parent._backward is not None:
-                parent._backward()
-                # print(f"计算{parent}的梯度")
-                for child in parent._child:
-                    if child._backward is not None:
-                        allValueNeedToBackward.append(child)
-
-
+        self.grad = 1.0  # 根节点梯度初始化为1
+        topo_order = []
+        visited = set()
+        
+        # 迭代法实现后序遍历（避免递归深度问题）
+        stack = [(self, False)]  # (节点, 是否已处理子节点)
+        
+        while stack:
+            node, processed = stack.pop()
+            if processed:
+                # 子节点已处理完，加入拓扑序
+                topo_order.append(node)
+            else:
+                if node in visited:
+                    continue
+                visited.add(node)
+                # 标记为“已处理子节点”，再次入栈
+                stack.append((node, True))
+                # 子节点逆序入栈（确保左到右处理，不影响顺序）
+                for child in reversed(node._child):
+                    stack.append((child, False))
+        
+        # 逆序遍历拓扑序，计算梯度
+        for node in reversed(topo_order):
+            if node._backward is not None:
+                node._backward()
 
 # 激活函数
 class ActivationFunction:
@@ -260,6 +313,10 @@ class ActivationFunction:
         sum_e_x = e_x[0]
         for x in e_x[1:]:
             sum_e_x = sum_e_x + x
+        # 添加数值稳定性检查，确保分母不为0
+        if sum_e_x.data == 0:
+            # 如果所有输入都非常小，导致exp结果为0，返回均匀分布
+            return np.array([Value(1.0 / len(values)) for _ in values])
         return np.array([x / sum_e_x for x in e_x])
 
 
@@ -294,7 +351,12 @@ class LossFunction:
         total = Value(0.0)
         for y_hat_i, y_true_i in zip(y_hat, y_true):
             if y_true_i == 1:  # 独热编码中只有真实类别为1，其余为0，可简化计算
+                if not isinstance(y_hat_i, Value):
+                    y_hat_i = Value(y_hat_i)
+                # print("y_hat_i", y_hat_i)
+                # print("y_hat_i_log", (math.log(y_hat_i.data)))
                 total += y_hat_i.log()  # 累加 log(y_hat_真实类别)
+                # print("t")
         loss = -total  # 加负号
         return loss
     
@@ -310,12 +372,17 @@ class Optimizer: # SGD
     def step(self):
         """基础梯度下降（默认SGD），子类可重写以实现其他算法"""
         for param in self.parameters:
+            # print(f'before{param}')
             param.data -= self.alpha * param.grad  # 参数更新
+            # print(f'after{param}')
 
     def zero_grad(self):
         """重置所有参数的梯度（单独提取，更灵活）"""
         for param in self.parameters:
             param.grad = 0.0
+    
+    def getParameters(self):
+        return self.parameters
 
 
 class SGDMomentum(Optimizer):
@@ -446,3 +513,18 @@ class Layer:
     def zero_grad(self):  # 修正方法名小写（PEP8规范）
         for param in self.parameters():
             param.grad = 0.0  # 重置梯度（原代码错误地重置了data，这里修正为grad）
+
+    def save_model(self, filename=None):
+       if filename is None:
+           filename = 'model.pkl'
+       with open(filename, 'wb') as f:
+           pickle.dump(self, f)
+        
+   # 从文件读取类的参数，可以自定义文件名
+    @staticmethod
+    def load_model(filename=None):
+        if filename is None:
+            filename = 'model.pkl'
+        with open(filename, 'rb') as f:
+            model = pickle.load(f)
+        return model
