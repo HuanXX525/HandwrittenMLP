@@ -27,43 +27,18 @@ class Value():
     def __repr__(self) -> str:
         return f"Value({self.data})"
 
-
-
 # ======== 加法运算 =======
-    # @forNotValue
     @forNotValue
     def __add__(self, other)-> "Value":
         out = Value(self.data + other.data, (self, other))  # 必须包含两者
-        # print(f"add 节点 {id(out)} 的子节点：{[id(self), id(other)]}")  # 应包含旧 b 和 c 的 id
-        # print(f"c 的 id：{id(c)}")  # 与上一行的 other id 一致
-        
+
         def _backward():
             # print("add 节点的 _backward 被调用！")
             self.grad += out.grad
             other.grad += out.grad  # other 是 c，梯度传递给 c
         out._backward = _backward
         return out
-    # def __add__(self, other)-> "Value":
 
-    #     out = Value(self.data + other.data, (self, other))
-        
-    #     def _backward():
-    #         '''
-    #             out = self + other
-    #             Dout_self = 1
-    #             Dout_other = 1
-    #             一元求导法则：
-    #             Dself = Dout_self * Dout = Dout
-    #             Dother = Dout_other * Dout = Dout
-    #             多元是将多个一元求导法则的Dout加起来:
-    #             Dself += Dout
-    #             Dother += Dout
-    #         '''
-    #         self.grad += out.grad
-    #         other.grad += out.grad
-        
-    #     out._backward = _backward # (O)
-    #     return out
     def __radd__(self, other)-> "Value":
         '''
             反向加法为了应对以下情形
@@ -104,7 +79,6 @@ class Value():
 # ======== 负运算 =======
     def __neg__(self)-> "Value":
         return self * -1
-
 
 # ======== 乘法运算 =======
     @forNotValue
@@ -243,29 +217,6 @@ class Value():
 
 
 # >>> 反向传播 <<<
-    # def backward(self):
-    #     self.grad = 1.0  # 根节点（损失）梯度初始化为1
-
-    #     # 步骤1：拓扑排序（获取从输入到输出的节点顺序）
-    #     topo_order = []
-    #     visited = set()
-    #     stack = [self]
-
-    #     while stack:
-    #         node = stack.pop()
-    #         if node not in visited:
-    #             visited.add(node)
-    #             # 先将子节点入栈（确保父节点后于子节点被访问）
-    #             for child in node._child:
-    #                 if child not in visited:
-    #                     stack.append(child)
-    #             topo_order.append(node)  # 后序添加，形成拓扑序
-
-    #     # 步骤2：逆序遍历拓扑排序（从输出到输入），计算梯度
-    #     for node in reversed(topo_order):
-    #         if node._backward is not None:
-    #             node._backward()  # 此时父节点的梯度已计算完成
-
     def backward(self):
         self.grad = 1.0  # 根节点梯度初始化为1
         topo_order = []
