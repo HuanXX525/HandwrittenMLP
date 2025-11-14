@@ -1,4 +1,4 @@
-from backwardAccelerate import ActivationFunction, LossFunction, Optimizer, to_one_hot, Layer, Value
+from backwardAccelerate import ActivationFunction, LossFunction, SGD, to_one_hot, Layer, Value
 import numpy as np
 
 def simple_test():
@@ -34,7 +34,7 @@ def simple_test():
     L2 = Layer(hidden_size, output_size, init_type="xavier")
     
     # 创建优化器 (使用较小的学习率)
-    optimizer = Optimizer(L1.parameters() + L2.parameters(), alpha=0.01)
+    optimizer = SGD(L1.parameters() + L2.parameters(), alpha=0.01)
     # print(optimizer.getParameters())
     # print(L1.parameters())
     # 训练几个epoch

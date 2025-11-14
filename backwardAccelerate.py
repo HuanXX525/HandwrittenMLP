@@ -1,4 +1,5 @@
 import math
+import os
 import pickle
 from typing import Callable, List, Optional, Union
 import numpy as np
@@ -335,7 +336,7 @@ class LossFunction:
         
         return loss
 # 优化器
-class Optimizer:  # SGD
+class SGD:  # SGD优化器
     def __init__(self, parameters: List[Value], alpha: float = 0.05):
         self.parameters = parameters
         self.alpha = alpha
@@ -350,38 +351,160 @@ class Optimizer:  # SGD
     
     def getParameters(self):
         return self.parameters
+    
+    # SGD保存到文件
+    def save(self, file_path: str):
+        """将SGD优化器状态保存到文件"""
+        # 保存核心状态：学习率+参数形状（用于校验）
+        state = {
+            'alpha': self.alpha,
+            'param_shapes': [p.data.shape for p in self.parameters]
+        }
+        # 序列化到文件
+        with open(file_path, 'wb') as f:
+            pickle.dump(state, f)
+        print(f"SGD状态已保存到 {file_path}")
+    
+    # SGD从文件加载
+    def load(self, file_path: str):
+        """从文件加载SGD优化器状态"""
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"文件 {file_path} 不存在")
+        
+        # 反序列化
+        with open(file_path, 'rb') as f:
+            state = pickle.load(f)
+        
+        # 校验参数形状是否匹配（防止模型结构变更）
+        current_shapes = [p.data.shape for p in self.parameters]
+        assert state['param_shapes'] == current_shapes, \
+            f"参数形状不匹配：保存时{state['param_shapes']}，当前{current_shapes}"
+        
+        # 恢复状态
+        self.alpha = state['alpha']
+        print(f"SGD状态已从 {file_path} 加载")
 
-class SGDMomentum(Optimizer):
+
+class SGDMomentum(SGD):  # 带动量的SGD
     def __init__(self, parameters: List[Value], alpha: float = 0.05, momentum: float = 0.9):
         super().__init__(parameters, alpha)
         self.momentum = momentum
-        self.velocities = [np.zeros_like(p.data) for p in parameters]
+        self.velocities = [np.zeros_like(p.data) for p in parameters]  # 动量速度
 
     def step(self):
         for i, param in enumerate(self.parameters):
             self.velocities[i] = self.momentum * self.velocities[i] + param.grad
             param.data -= self.alpha * self.velocities[i]
+    
+    # SGDMomentum保存到文件
+    def save(self, file_path: str):
+        """将SGDMomentum优化器状态保存到文件"""
+        # 保存核心状态：学习率+动量系数+速度数组+参数形状
+        state = {
+            'alpha': self.alpha,
+            'momentum': self.momentum,
+            'velocities': self.velocities,  # 动量速度（关键状态）
+            'param_shapes': [p.data.shape for p in self.parameters]
+        }
+        with open(file_path, 'wb') as f:
+            pickle.dump(state, f)
+        print(f"SGDMomentum状态已保存到 {file_path}")
+    
+    # SGDMomentum从文件加载
+    def load(self, file_path: str):
+        """从文件加载SGDMomentum优化器状态"""
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"文件 {file_path} 不存在")
+        
+        with open(file_path, 'rb') as f:
+            state = pickle.load(f)
+        
+        # 校验参数形状
+        current_shapes = [p.data.shape for p in self.parameters]
+        assert state['param_shapes'] == current_shapes, \
+            f"参数形状不匹配：保存时{state['param_shapes']}，当前{current_shapes}"
+        
+        # 校验速度数组形状（与参数匹配）
+        for i in range(len(state['velocities'])):
+            assert state['velocities'][i].shape == current_shapes[i], \
+                f"第{i}个参数的速度数组形状不匹配"
+        
+        # 恢复状态
+        self.alpha = state['alpha']
+        self.momentum = state['momentum']
+        self.velocities = state['velocities']  # 恢复动量速度
+        print(f"SGDMomentum状态已从 {file_path} 加载")
 
-class Adam(Optimizer):
+
+class Adam(SGD):  # Adam优化器
     def __init__(self, parameters: List[Value], alpha: float = 0.001, 
                  beta1: float = 0.9, beta2: float = 0.999, eps: float = 1e-8):
         super().__init__(parameters, alpha)
         self.beta1 = beta1
         self.beta2 = beta2
         self.eps = eps
-        self.t = 0
-        self.m = [np.zeros_like(p.data) for p in parameters]
-        self.v = [np.zeros_like(p.data) for p in parameters]
+        self.t = 0  # 迭代次数（用于偏差修正）
+        self.m = [np.zeros_like(p.data) for p in parameters]  # 一阶矩
+        self.v = [np.zeros_like(p.data) for p in parameters]  # 二阶矩
 
     def step(self):
         self.t += 1
         for i, param in enumerate(self.parameters):
             grad = param.grad
             self.m[i] = self.beta1 * self.m[i] + (1 - self.beta1) * grad
-            self.v[i] = self.beta2 * self.v[i] + (1 - self.beta2) * (grad ** 2)
-            m_hat = self.m[i] / (1 - self.beta1 ** self.t)
+            self.v[i] = self.beta2 * self.v[i] + (1 - self.beta2) * (grad **2)
+            m_hat = self.m[i] / (1 - self.beta1** self.t)
             v_hat = self.v[i] / (1 - self.beta2 ** self.t)
             param.data -= self.alpha * m_hat / (np.sqrt(v_hat) + self.eps)
+    
+    # Adam保存到文件
+    def save(self, file_path: str):
+        """将Adam优化器状态保存到文件"""
+        # 保存核心状态：学习率+beta系数+迭代次数+一阶矩/二阶矩数组+参数形状
+        state = {
+            'alpha': self.alpha,
+            'beta1': self.beta1,
+            'beta2': self.beta2,
+            'eps': self.eps,
+            't': self.t,  # 迭代次数（关键，影响偏差修正）
+            'm': self.m,  # 一阶矩（关键状态）
+            'v': self.v,  # 二阶矩（关键状态）
+            'param_shapes': [p.data.shape for p in self.parameters]
+        }
+        with open(file_path, 'wb') as f:
+            pickle.dump(state, f)
+        print(f"Adam状态已保存到 {file_path}")
+    
+    # Adam从文件加载
+    def load(self, file_path: str):
+        """从文件加载Adam优化器状态"""
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"文件 {file_path} 不存在")
+        
+        with open(file_path, 'rb') as f:
+            state = pickle.load(f)
+        
+        # 校验参数形状
+        current_shapes = [p.data.shape for p in self.parameters]
+        assert state['param_shapes'] == current_shapes, \
+            f"参数形状不匹配：保存时{state['param_shapes']}，当前{current_shapes}"
+        
+        # 校验一阶矩/二阶矩形状（与参数匹配）
+        for i in range(len(state['m'])):
+            assert state['m'][i].shape == current_shapes[i], \
+                f"第{i}个参数的一阶矩形状不匹配"
+            assert state['v'][i].shape == current_shapes[i], \
+                f"第{i}个参数的二阶矩形状不匹配"
+        
+        # 恢复状态
+        self.alpha = state['alpha']
+        self.beta1 = state['beta1']
+        self.beta2 = state['beta2']
+        self.eps = state['eps']
+        self.t = state['t']  # 恢复迭代次数
+        self.m = state['m']  # 恢复一阶矩
+        self.v = state['v']  # 恢复二阶矩
+        print(f"Adam状态已从 {file_path} 加载")
 
 def to_one_hot(label: int, num_classes: int) -> np.ndarray:
     one_hot = np.zeros(num_classes, dtype=np.float32)

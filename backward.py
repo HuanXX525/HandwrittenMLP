@@ -315,7 +315,7 @@ class LossFunction:
 import math
 from typing import List
 
-class Optimizer: # SGD
+class SGD: # SGD
     def __init__(self, parameters: List[Value], alpha: float = 0.05):
         self.parameters = parameters  # 待优化的参数列表（Value类型）
         self.alpha = alpha  # 学习率
@@ -336,7 +336,7 @@ class Optimizer: # SGD
         return self.parameters
 
 
-class SGDMomentum(Optimizer):
+class SGDMomentum(SGD):
     """带动量的SGD（Momentum）：模拟物理惯性，加速收敛并抑制震荡"""
     def __init__(self, parameters: List[Value], alpha: float = 0.05, momentum: float = 0.9):
         super().__init__(parameters, alpha)
@@ -352,7 +352,7 @@ class SGDMomentum(Optimizer):
             param.data -= self.alpha * self.velocities[i]
 
 
-class Adam(Optimizer):
+class Adam(SGD):
     """Adam优化器：结合动量和自适应学习率，适用于大多数场景"""
     def __init__(self, parameters: List[Value], alpha: float = 0.001, 
                  beta1: float = 0.9, beta2: float = 0.999, eps: float = 1e-8):

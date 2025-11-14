@@ -59,27 +59,33 @@ def load_mnist_labels(file_path):
     return labels
 
 
-def load_mnist_dataset(data_dir, flatten=False):
+def load_mnist_dataset(data_dir, flatten=False, type="train"):
     """
     加载MNIST数据集
     
     Args:
         data_dir (str): 数据目录路径
         flatten (bool): 是否将图像展平为二维数组(N, pixels)
+        type (str): 数据类型，可以是"train"或"test"
         
     Returns:
         tuple: (train_images, train_labels, test_images, test_labels)
     """
     # 加载训练集
-    train_images_path = os.path.join(data_dir, 'train-images-idx3-ubyte')
-    train_labels_path = os.path.join(data_dir, 'train-labels-idx1-ubyte')
-    train_images = load_mnist_images(train_images_path, flatten=flatten)
-    train_labels = load_mnist_labels(train_labels_path)
-    
+    if(type == "train"):
+        print("Loading train dataset...")
+        train_images_path = os.path.join(data_dir, 'train-images-idx3-ubyte')
+        train_labels_path = os.path.join(data_dir, 'train-labels-idx1-ubyte')
+        images = load_mnist_images(train_images_path, flatten=flatten)
+        labels = load_mnist_labels(train_labels_path)
+        print("Loaded train dataset.")
+    else:
     # 加载测试集
-    test_images_path = os.path.join(data_dir, 't10k-images.idx3-ubyte')
-    test_labels_path = os.path.join(data_dir, 't10k-labels.idx1-ubyte')
-    test_images = load_mnist_images(test_images_path, flatten=flatten)
-    test_labels = load_mnist_labels(test_labels_path)
+        print("Loading test dataset...")
+        test_images_path = os.path.join(data_dir, 't10k-images.idx3-ubyte')
+        test_labels_path = os.path.join(data_dir, 't10k-labels.idx1-ubyte')
+        images = load_mnist_images(test_images_path, flatten=flatten)
+        labels = load_mnist_labels(test_labels_path)
+        print("Loaded test dataset.")
     
-    return train_images, train_labels, test_images, test_labels
+    return images, labels

@@ -1,4 +1,4 @@
-from backwardAccelerate import ActivationFunction, LossFunction, Optimizer, to_one_hot, Layer, SGDMomentum, Adam, Value
+from backwardAccelerate import ActivationFunction, LossFunction, SGD, to_one_hot, Layer, SGDMomentum, Adam, Value
 from data_loader import load_mnist_dataset
 import numpy as np
 numInputs, numOutputs, numHiddens = 784, 10, 256 # 定义模型参数
@@ -6,7 +6,7 @@ numInputs, numOutputs, numHiddens = 784, 10, 256 # 定义模型参数
 L1 = Layer(numInputs, numHiddens)
 L2 = Layer(numHiddens, numOutputs)
 
-opti = Optimizer(L1.parameters()+L2.parameters(), 0.01)
+opti = SGD(L1.parameters()+L2.parameters(), 0.01)
 
 train_images, train_labels, test_images, test_labels = load_mnist_dataset('./data', flatten=True)
 train_images = np.array(train_images)

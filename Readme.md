@@ -13,9 +13,21 @@
 > [!NOTE]
 > 待补充
 
+- SGD 是把 “积累所有样本” 改成 “逐个样本 / 小批量样本更新”，解决了原始 GD 数据量大时计算慢的问题
+- Momentum 是给权重更新加了 “惯性”，避免梯度下降时卡在局部最优（论文也提到过原始方法可能陷入局部 minima 的问题）；
+- Adam 则是结合了 Momentum 和自适应学习率，让更新更稳定、更快。
+
 我们对不同优化器（SGD、Momentum、Adam）进行了比较实验，结果如下：
 
 ## 本仓库的实现
+
+### 运行
+
+```bash
+python trainBatchAccelerate.py --optimizer SGD --epoch 10 --learningRate 0.001
+python trainBatchAccelerate.py --optimizer Momentum --epoch 10 --learningRate 0.001
+python trainBatchAccelerate.py --optimizer Adam --epoch 10 --learningRate 0.001
+```
 
 ### 实现的基本原理
 
