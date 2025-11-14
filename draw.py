@@ -1,5 +1,7 @@
 from graphviz import Digraph
-
+"""
+仅适用于未加速版本
+"""
 def trace(root):
     nodes, edges = set(), set()
     def build(v):

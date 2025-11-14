@@ -1,4 +1,4 @@
-from backwardAccelerate import ActivationFunction, LossFunction, Optimizer, to_one_hot, Layer, SGDMomentum, Adam
+from backwardAccelerate import ActivationFunction, LossFunction, Optimizer, to_one_hot, Layer, SGDMomentum, Adam, Value
 from data_loader import load_mnist_dataset
 import numpy as np
 numInputs, numOutputs, numHiddens = 784, 10, 256 # 定义模型参数
@@ -21,7 +21,7 @@ for epoch in range(11):
     print(f"Epoch: {epoch}")
     for imgIdx in range(100):
 
-        img = train_images[imgIdx]
+        img = Value(train_images[imgIdx])
 
         label = train_labels[imgIdx]
         # 前向传播
@@ -32,7 +32,7 @@ for epoch in range(11):
         yHat = ActivationFunction.softmax(a2)
         # print(f"yHat: {yHat}")
         # print(oh)
-        loss = LossFunction.categorical_cross_entropy(yHat, label)
+        loss = LossFunction.categorical_cross_entropy(yHat, int(label))
         diff = loss.data - lossL[label]
         lossL[label] = loss.data
         formatted_losses = [f"{loss:6.2f}" for loss in lossL]
