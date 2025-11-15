@@ -8,7 +8,7 @@ L2 = Layer(numHiddens, numOutputs)
 
 opti = SGD(L1.parameters()+L2.parameters(), 0.01)
 
-train_images, train_labels, test_images, test_labels = load_mnist_dataset('./data', flatten=True)
+train_images, train_labels = load_mnist_dataset('./data', flatten=True)
 train_images = np.array(train_images)
 # train_images = np.array([[0, 0, 4], [5, 0, 1], [1, 5, 0]])
 
@@ -43,5 +43,5 @@ for epoch in range(11):
         loss.backward()
         opti.step()
 
-L1.save_model('L1.pkl')
-L2.save_model('L2.pkl')
+# L1.save_model('L1.pkl')
+# L2.save_model('L2.pkl')
