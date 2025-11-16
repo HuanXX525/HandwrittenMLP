@@ -1,0 +1,60 @@
+============= TRAIN LOG =============
+TIMESTAMP: 2025-11-15 13:36:10
+Optimizer: SGD
+Learning Rate: 0.001
+Epochs: 20
+Contine Train: False
+Num of sample: 60000
+============= TRAIN LOG =============
+TIMESTAMP: 2025-11-15 13:43:36
+Optimizer: SGD
+Learning Rate: 0.001
+Epochs: 20
+Contine Train: False
+Num of sample: 60000
+Epoch 0 | Total Avg Loss: 0.2096
+
+Epoch 1 | Total Avg Loss: 0.0901
+
+Epoch 2 | Total Avg Loss: 0.0578
+
+Epoch 3 | Total Avg Loss: 0.0409
+
+Epoch 4 | Total Avg Loss: 0.0317
+
+Epoch 5 | Total Avg Loss: 0.0259
+
+Epoch 6 | Total Avg Loss: 0.0231
+
+Epoch 7 | Total Avg Loss: 0.0179
+
+Epoch 8 | Total Avg Loss: 0.0159
+
+Epoch 9 | Total Avg Loss: 0.0158
+
+Epoch 10 | Total Avg Loss: 0.0140
+
+Epoch 11 | Total Avg Loss: 0.0134
+
+Epoch 12 | Total Avg Loss: 0.0133
+
+Epoch 13 | Total Avg Loss: 0.0114
+
+Epoch 14 | Total Avg Loss: 0.0118
+
+Epoch 15 | Total Avg Loss: 0.0118
+
+Epoch 16 | Total Avg Loss: 0.0119
+
+Epoch 17 | Total Avg Loss: 0.0091
+
+Epoch 18 | Total Avg Loss: 0.0097
+
+Epoch 19 | Total Avg Loss: 0.0090
+
+Saved model and loss curve as SGDL1.pkl and SGDL2.pkl and SGDLossCurve.png
+============= TRAIN LOG =============
+============= TEST LOG =============
+TIMESTAMP: 2025-11-16 11:13:37
+Optimizer: SGD
+Test Accuracy: 0.9787

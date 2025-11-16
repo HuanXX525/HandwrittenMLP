@@ -1,0 +1,60 @@
+============= TRAIN LOG =============
+TIMESTAMP: 2025-11-15 13:37:38
+Optimizer: Adam
+Learning Rate: 0.001
+Epochs: 20
+Contine Train: False
+Num of sample: 60000
+============= TRAIN LOG =============
+TIMESTAMP: 2025-11-15 13:48:23
+Optimizer: Adam
+Learning Rate: 0.0005
+Epochs: 20
+Contine Train: False
+Num of sample: 60000
+Epoch 0 | Total Avg Loss: 0.2938
+
+Epoch 1 | Total Avg Loss: 0.1213
+
+Epoch 2 | Total Avg Loss: 0.0811
+
+Epoch 3 | Total Avg Loss: 0.0581
+
+Epoch 4 | Total Avg Loss: 0.0423
+
+Epoch 5 | Total Avg Loss: 0.0313
+
+Epoch 6 | Total Avg Loss: 0.0226
+
+Epoch 7 | Total Avg Loss: 0.0182
+
+Epoch 8 | Total Avg Loss: 0.0149
+
+Epoch 9 | Total Avg Loss: 0.0112
+
+Epoch 10 | Total Avg Loss: 0.0105
+
+Epoch 11 | Total Avg Loss: 0.0085
+
+Epoch 12 | Total Avg Loss: 0.0082
+
+Epoch 13 | Total Avg Loss: 0.0065
+
+Epoch 14 | Total Avg Loss: 0.0073
+
+Epoch 15 | Total Avg Loss: 0.0064
+
+Epoch 16 | Total Avg Loss: 0.0046
+
+Epoch 17 | Total Avg Loss: 0.0046
+
+Epoch 18 | Total Avg Loss: 0.0042
+
+Epoch 19 | Total Avg Loss: 0.0065
+
+Saved model and loss curve as AdamL1.pkl and AdamL2.pkl and AdamLossCurve.png
+============= TRAIN LOG =============
+============= TEST LOG =============
+TIMESTAMP: 2025-11-16 11:14:24
+Optimizer: Adam
+Test Accuracy: 0.9802

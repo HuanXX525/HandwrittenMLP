@@ -1,0 +1,53 @@
+============= TRAIN LOG =============
+TIMESTAMP: 2025-11-15 14:00:18
+Optimizer: Momentum
+Learning Rate: 0.001
+Epochs: 20
+Contine Train: False
+Num of sample: 60000
+Epoch 0 | Total Avg Loss: 0.2356
+
+Epoch 1 | Total Avg Loss: 0.0986
+
+Epoch 2 | Total Avg Loss: 0.0628
+
+Epoch 3 | Total Avg Loss: 0.0421
+
+Epoch 4 | Total Avg Loss: 0.0285
+
+Epoch 5 | Total Avg Loss: 0.0211
+
+Epoch 6 | Total Avg Loss: 0.0159
+
+Epoch 7 | Total Avg Loss: 0.0129
+
+Epoch 8 | Total Avg Loss: 0.0116
+
+Epoch 9 | Total Avg Loss: 0.0095
+
+Epoch 10 | Total Avg Loss: 0.0086
+
+Epoch 11 | Total Avg Loss: 0.0084
+
+Epoch 12 | Total Avg Loss: 0.0092
+
+Epoch 13 | Total Avg Loss: 0.0067
+
+Epoch 14 | Total Avg Loss: 0.0068
+
+Epoch 15 | Total Avg Loss: 0.0080
+
+Epoch 16 | Total Avg Loss: 0.0051
+
+Epoch 17 | Total Avg Loss: 0.0073
+
+Epoch 18 | Total Avg Loss: 0.0043
+
+Epoch 19 | Total Avg Loss: 0.0066
+
+Saved model and loss curve as MomentumL1.pkl and MomentumL2.pkl and MomentumLossCurve.png
+============= TRAIN LOG =============
+============= TEST LOG =============
+TIMESTAMP: 2025-11-16 11:15:09
+Optimizer: Momentum
+Test Accuracy: 0.9787
